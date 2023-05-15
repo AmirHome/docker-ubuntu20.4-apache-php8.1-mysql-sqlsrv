@@ -1,0 +1,43 @@
+version: "3"
+
+services:
+  db-mysql:
+    container_name: db-mysql
+    # platform: linux/x86_64
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql_db:/var/lib/mysql"
+    environment:
+     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+
+  apache:
+    container_name: apache-php8-sqlsrv
+    # platform: linux/x86_64
+    build:
+      context: .
+      dockerfile: ./DockerfilePHP81
+    volumes:
+      - ./www:/var/www/html/
+    environment:
+      - SA_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    ports:
+      - 80:80
+    depends_on:
+      - db-mysql
+      - db-mssql
+
+  db-mssql:
+    container_name: db-mssql
+    # platform: linux/x86_64
+    image: mcr.microsoft.com/mssql/server
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Root@123
+    restart: always
+    command: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "Root@123"
